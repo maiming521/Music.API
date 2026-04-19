@@ -1,7 +1,7 @@
 {
   "name": "ncm-api-vercel",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "api/index.js",
   "dependencies": {
     "NeteaseCloudMusicApi": "4.12.1"
   }
