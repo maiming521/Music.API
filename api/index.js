@@ -1,13 +1,17 @@
 const api = require('NeteaseCloudMusicApi');
 
 module.exports = async (req, res) => {
+  // 强制JSON响应头！永久解决song/url浏览器二进制乱码问题
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
-  // 调试：打印包里所有导出内容，看看到底是什么结构
-  res.status(200).json({
-    packageExportKeys: Object.keys(api),
-    apiIsFunction: typeof api === 'function',
-    handlerIsExist: !!api.handler,
-    defaultIsExist: !!api.default
-  });
+  try {
+    // 官方原生正确调用方式！和你包里导出结构完全匹配
+    await api.serveNcmApi(req, res);
+  } catch (err) {
+    res.status(200).json({
+      code: -1,
+      msg: '接口异常',
+      error: err.message
+    });
+  }
 };
