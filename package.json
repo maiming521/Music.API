@@ -1,8 +1,7 @@
 {
-  "name": "ncm-api-vercel",
+  "name": "vercel-music-api",
   "version": "1.0.0",
-  "main": "api/index.js",
   "dependencies": {
-    "NeteaseCloudMusicApi": "4.12.1"
+    "axios": "^1.6.0"
   }
 }
