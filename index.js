@@ -1,14 +1,18 @@
-const express = require('express');
-const app = express();
-
-// 加载官方原版网易云API，和你之前调试包里结构100%匹配
 const api = require('NeteaseCloudMusicApi');
-api.serveNcmApi(app);
 
-// 全局强制JSON响应头！永久解决song/url浏览器二进制乱码问题
-app.use((req, res, next) => {
-  res.header('Content-Type', 'application/json; charset=utf-8');
-  next();
-});
+// Vercel Serverless 函数标准入口，不是express！！！
+module.exports = async (req, res) => {
+  // 强制JSON响应头，永久解决song/url浏览器二进制乱码
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
-module.exports = app;
+  try {
+    // 你之前调试确认过：官方唯一原生入口
+    await api.serveNcmApi(req, res);
+  } catch (err) {
+    res.status(200).json({
+      code: -1,
+      msg: '接口异常',
+      error: err.message
+    });
+  }
+};
