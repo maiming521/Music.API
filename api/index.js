@@ -1,12 +1,12 @@
-const api = require('NeteaseCloudMusicApi');
+const { handler } = require('NeteaseCloudMusicApi');
 
 module.exports = async (req, res) => {
-  // 强制JSON响应头！彻底解决song/url浏览器二进制乱码问题
+  // 强制JSON响应头！永久解决song/url浏览器二进制乱码
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   
   try {
-    // 4.12.1正确调用方式！不再报default错误
-    await api(req, res);
+    // 官方原生正确调用方式，再也不会报api/is not a function
+    await handler(req, res);
   } catch (err) {
     res.status(200).json({
       code: -1,
