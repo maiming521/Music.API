@@ -1,9 +1,9 @@
 {
   "name": "netease-api-vercel",
-  "version": "4.13.0",
+  "version": "4.12.1",
   "main": "api/index.js",
   "dependencies": {
-    "NeteaseCloudMusicApi": "4.13.0",
+    "NeteaseCloudMusicApi": "^4.12.1",
     "express": "^4.18.2"
   }
 }
