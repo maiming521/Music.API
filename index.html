@@ -31,7 +31,7 @@
         .player-inner { max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
         .player-cover { width: 56px; height: 56px; border-radius: 14px; background: #2a2f3a; background-size: cover; background-position: center; }
         .player-info { min-width: 160px; }
-        .player-title { font-weight: 600; }
+        .player-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .player-artist { font-size: 0.7rem; color: #9aaec5; }
         .player-controls { display: flex; align-items: center; gap: 20px; }
         .ctrl-icon { background: transparent; border: none; color: #eef4ff; font-size: 1.4rem; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
@@ -93,14 +93,14 @@
     </div>
 </div>
 
-<audio id="audio"></audio>
+<audio id="audio">
 
 <script>
     // ========== 配置 ==========
     const API_BASE = 'https://api.567.one';          // 你的 API 域名
     const DEFAULT_PLAYLIST_ID = '5185298264';       // 默认歌单ID
 
-    // 获取歌曲播放地址（直接使用第三方稳定 API）
+    // 获取歌曲播放地址
     function getSongUrl(songId) {
         return `https://api.injahow.cn/meting/?server=netease&type=song&id=${songId}`;
     }
@@ -179,16 +179,17 @@
         return [];
     }
 
-    // 渲染推荐
+    // 渲染推荐歌单
     async function renderRecommend() {
         recommendGrid.innerHTML = '加载中...';
         const songs = await loadPlaylist(DEFAULT_PLAYLIST_ID);
+        currentPlaylist = songs; // 推荐歌单直接作为全局播放列表
         if (!songs.length) {
             recommendGrid.innerHTML = '<div>暂无推荐，请稍后重试</div>';
             return;
         }
         recommendGrid.innerHTML = '';
-        songs.forEach(song => {
+        songs.forEach((song,index) => {
             const card = document.createElement('div');
             card.className = 'rec-card';
             card.innerHTML = `
@@ -197,9 +198,7 @@
                 <div class="rec-artist">${escapeHtml(song.artist)}</div>
             `;
             card.addEventListener('click', async () => {
-                const detail = await getSongDetail(song.id);
-                currentPlaylist = detail ? [detail] : [song];
-                currentIndex = 0;
+                currentIndex = index; // 点击哪首播放哪首
                 playCurrent();
             });
             recommendGrid.appendChild(card);
@@ -235,7 +234,7 @@
             return;
         }
         resultsList.innerHTML = '';
-        results.forEach(song => {
+        results.forEach((song,index) => {
             const item = document.createElement('div');
             item.className = 'result-item';
             item.innerHTML = `
@@ -246,9 +245,8 @@
                 </div>
             `;
             item.addEventListener('click', async () => {
-                const detail = await getSongDetail(song.id);
-                currentPlaylist = detail ? [detail] : [song];
-                currentIndex = 0;
+                currentPlaylist = results; // 搜索结果作为播放列表
+                currentIndex = index;
                 playCurrent();
                 searchResultsDiv.style.display = 'none';
             });
@@ -256,27 +254,27 @@
         });
     }
 
-    // 播放控制
+    // 播放当前歌曲（修复异步获取url错乱）
     async function playCurrent() {
         if (!currentPlaylist.length) return;
         const song = currentPlaylist[currentIndex];
         playerTitle.innerText = song.name;
         playerArtist.innerText = song.artist;
         playerCover.style.backgroundImage = `url(${song.cover || 'https://picsum.photos/56/56'})`;
-        const audioUrl = getSongUrl(song.id);
-        // 由于第三方API返回的是JSON，需要从中提取url
+
         try {
-            const res = await fetch(audioUrl);
+            const res = await fetch(getSongUrl(song.id));
             const data = await res.json();
             if (data && data[0] && data[0].url) {
                 audio.src = data[0].url;
                 audio.load();
                 audio.play().catch(e => console.log('播放失败', e));
             } else {
-                console.error('无效的音频链接');
+                alert('暂无音源，无法播放');
             }
         } catch (err) {
             console.error('获取音频链接失败', err);
+            alert('音源接口异常');
         }
     }
 
@@ -306,8 +304,7 @@
     function bindEvents() {
         playBtn.addEventListener('click', () => {
             if (audio.paused) {
-                if (!audio.src && currentPlaylist.length) playCurrent();
-                else audio.play();
+                audio.play();
             } else audio.pause();
         });
         prevBtn.addEventListener('click', prevTrack);
@@ -330,8 +327,6 @@
     async function init() {
         bindEvents();
         await renderRecommend();
-        const defaultSongs = await loadPlaylist(DEFAULT_PLAYLIST_ID);
-        if (defaultSongs.length) currentPlaylist = defaultSongs;
         audio.volume = volumeSlider.value;
     }
     init();
